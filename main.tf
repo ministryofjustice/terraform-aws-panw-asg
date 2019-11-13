@@ -1,6 +1,3 @@
-## pass in mgmt subnets here 
-## pass in trust 
-## pass in untrust 
 data "aws_ami" "this" {
   most_recent = true
 
@@ -23,7 +20,7 @@ data "aws_ami" "this" {
 }
 
 resource "aws_launch_template" "this" {
-  image_id = data.aws_ami.this.id  
+  image_id = var.custom_ami != "" ? var.custom_ami : data.aws_ami.this.id
   instance_type = var.instance_type
   user_data = var.user_data
   key_name = var.key_name

@@ -71,3 +71,7 @@ variable "asg_name" {
   type = string
   default = "PANSFW ASG"
 }
+
+variable "custom_ami" {
+  default = null
+}
