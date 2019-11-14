@@ -20,7 +20,7 @@ data "aws_ami" "this" {
 }
 
 resource "aws_launch_template" "this" {
-  image_id = var.custom_ami != "" ? var.custom_ami : data.aws_ami.this.id
+  image_id = var.custom_ami != null ? var.custom_ami : data.aws_ami.this.id
   instance_type = var.instance_type
   user_data = var.user_data
   key_name = var.key_name
