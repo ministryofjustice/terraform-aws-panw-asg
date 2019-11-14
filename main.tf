@@ -26,14 +26,28 @@ resource "aws_launch_template" "this" {
   key_name = var.key_name
 }
 
-resource "aws_autoscaling_policy" "scale_out" {
+resource "aws_autoscaling_policy" "dataplane_cpu_scale_out" {
   name = "panfw_scale_out"
   scaling_adjustment = 1
   adjustment_type = "ChangeInCapacity"
   cooldown = 600
   autoscaling_group_name = aws_autoscaling_group.this.name
 }
-resource "aws_autoscaling_policy" "scale_in" {
+resource "aws_autoscaling_policy" "dataplane_cpu_scale_in" {
+  name = "panfw_scale_in"
+  scaling_adjustment = -1
+  adjustment_type = "ChangeInCapacity"
+  cooldown = 600
+  autoscaling_group_name = aws_autoscaling_group.this.name
+}
+resource "aws_autoscaling_policy" "active_sessions_scale_out" {
+  name = "panfw_scale_out"
+  scaling_adjustment = 1
+  adjustment_type = "ChangeInCapacity"
+  cooldown = 600
+  autoscaling_group_name = aws_autoscaling_group.this.name
+}
+resource "aws_autoscaling_policy" "active_sessions_scale_in" {
   name = "panfw_scale_in"
   scaling_adjustment = -1
   adjustment_type = "ChangeInCapacity"
@@ -93,7 +107,7 @@ resource "aws_sns_topic" "terminate" {
 }
 
 resource "aws_iam_role" "sns_role" {
-  name = "Helpme" 
+  name = "SNS_Role" 
   path = "/"
 
   assume_role_policy = <<EOF
@@ -111,7 +125,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "ASGNotifierRolePolicy" {
-  name = "helpme"
+  name = "ASGNotifier_Policy"
   role = aws_iam_role.sns_role.id
 
   policy = <<EOF
