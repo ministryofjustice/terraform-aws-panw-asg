@@ -24,6 +24,7 @@ resource "aws_launch_template" "this" {
   instance_type = var.instance_type
   user_data = var.user_data
   key_name = var.key_name
+  vpc_security_group_ids = var.security_group_ids
 }
 
 resource "aws_autoscaling_policy" "dataplane_cpu-scale_up" {
@@ -96,6 +97,12 @@ EOF
   notification_target_arn = aws_sns_topic.terminate.arn
   role_arn                = aws_iam_role.sns_role.arn
   }
+  tags = "${concat(
+      list(
+        map("key", "Name", "value", "PAN_FW_ASG", "propagate_at_launch", true)
+      ),
+      var.extra_tags)
+  }"    
 }
 
 resource "aws_sns_topic" "launch" {

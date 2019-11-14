@@ -73,5 +73,27 @@ variable "asg_name" {
 }
 
 variable "custom_ami" {
+  description = "Custom AMI for launch template"
+  type = string
   default = null
 }
+
+variable "security_group_ids" {
+  description = "List of security group Ids for instance Template"
+  type = list(string)
+  default = []
+}
+
+variable "extra_tags" {
+  description = "Extra tags to assign to ASG"
+  default = [{
+    key = null
+    value = null
+    proprogate_at_launch = null
+    }]
+  type =  list(object({
+    key = string
+    value = string
+    proprogate_at_launch = bool
+  }))
+}  
