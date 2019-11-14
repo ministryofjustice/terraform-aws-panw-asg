@@ -89,7 +89,7 @@ variable "extra_tags" {
   default = [{
     key = null
     value = null
-    proprogate_at_launch = null
+    propagate_at_launch = null
     }]
   type =  list(object({
     key = string
