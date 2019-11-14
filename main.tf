@@ -26,28 +26,28 @@ resource "aws_launch_template" "this" {
   key_name = var.key_name
 }
 
-resource "aws_autoscaling_policy" "dataplane_cpu_scale_out" {
+resource "aws_autoscaling_policy" "dataplane_cpu_scale_up" {
   name = "panfw_scale_out"
   scaling_adjustment = 1
   adjustment_type = "ChangeInCapacity"
   cooldown = 600
   autoscaling_group_name = aws_autoscaling_group.this.name
 }
-resource "aws_autoscaling_policy" "dataplane_cpu_scale_in" {
+resource "aws_autoscaling_policy" "dataplane_cpu_scale_down" {
   name = "panfw_scale_in"
   scaling_adjustment = -1
   adjustment_type = "ChangeInCapacity"
   cooldown = 600
   autoscaling_group_name = aws_autoscaling_group.this.name
 }
-resource "aws_autoscaling_policy" "active_sessions_scale_out" {
+resource "aws_autoscaling_policy" "active_sessions_scale_up" {
   name = "panfw_scale_out"
   scaling_adjustment = 1
   adjustment_type = "ChangeInCapacity"
   cooldown = 600
   autoscaling_group_name = aws_autoscaling_group.this.name
 }
-resource "aws_autoscaling_policy" "active_sessions_scale_in" {
+resource "aws_autoscaling_policy" "active_sessions_scale_down" {
   name = "panfw_scale_in"
   scaling_adjustment = -1
   adjustment_type = "ChangeInCapacity"
