@@ -97,12 +97,11 @@ EOF
   notification_target_arn = aws_sns_topic.terminate.arn
   role_arn                = aws_iam_role.sns_role.arn
   }
-  tags = "${concat(
+  tags = concat(
       list(
         map("key", "Name", "value", "PAN_FW_ASG", "propagate_at_launch", true)
       ),
       var.extra_tags)
-  }"    
 }
 
 resource "aws_sns_topic" "launch" {
