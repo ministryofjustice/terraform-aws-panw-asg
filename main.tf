@@ -3,7 +3,7 @@ data "aws_ami" "this" {
 
   filter {
     name   = "name"
-    values = ["PA-VM-AWS-${var.fw_version_map[var.fw_version]}*"]
+    values = ["PA-VM-AWS-${var.fw_version}*"]
   }
 
   filter {
@@ -20,88 +20,88 @@ data "aws_ami" "this" {
 }
 
 resource "aws_launch_template" "this" {
-  image_id = var.custom_ami != null ? var.custom_ami : data.aws_ami.this.id
-  instance_type = var.instance_type
-  user_data = var.user_data
-  key_name = var.key_name
+  image_id               = var.custom_ami != null ? var.custom_ami : data.aws_ami.this.id
+  instance_type          = var.instance_type
+  user_data              = var.user_data
+  key_name               = var.key_name
   vpc_security_group_ids = var.security_group_ids
 }
 
 resource "aws_autoscaling_policy" "dataplane_cpu-scale_up" {
-  name = "panfw_scale_out"
-  scaling_adjustment = 1
-  adjustment_type = "ChangeInCapacity"
-  cooldown = 600
+  name                   = "panfw_scale_out"
+  scaling_adjustment     = 1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 600
   autoscaling_group_name = aws_autoscaling_group.this.name
 }
 resource "aws_autoscaling_policy" "dataplane_cpu-scale_down" {
-  name = "panfw_scale_in"
-  scaling_adjustment = -1
-  adjustment_type = "ChangeInCapacity"
-  cooldown = 600
+  name                   = "panfw_scale_in"
+  scaling_adjustment     = -1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 600
   autoscaling_group_name = aws_autoscaling_group.this.name
 }
 resource "aws_autoscaling_policy" "active_sessions-scale_up" {
-  name = "panfw_scale_out"
-  scaling_adjustment = 1
-  adjustment_type = "ChangeInCapacity"
-  cooldown = 600
+  name                   = "panfw_scale_out"
+  scaling_adjustment     = 1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 600
   autoscaling_group_name = aws_autoscaling_group.this.name
 }
 resource "aws_autoscaling_policy" "active_sessions-scale_down" {
-  name = "panfw_scale_in"
-  scaling_adjustment = -1
-  adjustment_type = "ChangeInCapacity"
-  cooldown = 600
+  name                   = "panfw_scale_in"
+  scaling_adjustment     = -1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 600
   autoscaling_group_name = aws_autoscaling_group.this.name
 }
 resource "aws_autoscaling_group" "this" {
-  name               = var.asg_name
-  desired_capacity   = var.desired_capacity
-  max_size           = var.max_size
-  min_size           = var.min_size
-  vpc_zone_identifier        = var.vpc_zone_ids
+  name                = var.asg_name
+  desired_capacity    = var.desired_capacity
+  max_size            = var.max_size
+  min_size            = var.min_size
+  vpc_zone_identifier = var.vpc_zone_ids
 
   launch_template {
     id      = aws_launch_template.this.id
     version = "$Latest"
-  } 
-
- initial_lifecycle_hook { 
-  name                   = "launch-asg-panfw"
-  default_result         = "CONTINUE"
-  heartbeat_timeout      = 300
-  lifecycle_transition   = "autoscaling:EC2_INSTANCE_LAUNCHING"
-
-  notification_metadata = <<EOF
-{
-  "foo": "bar"
-}
-EOF
-
-  notification_target_arn = aws_sns_topic.launch.arn
-  role_arn                = aws_iam_role.sns_role.arn
   }
 
- initial_lifecycle_hook { 
-  name                   = "terminate-asg-panfw"
-  default_result         = "CONTINUE"
-  heartbeat_timeout      = 300
-  lifecycle_transition   = "autoscaling:EC2_INSTANCE_TERMINATING"
+  initial_lifecycle_hook {
+    name                 = "launch-asg-panfw"
+    default_result       = "CONTINUE"
+    heartbeat_timeout    = 300
+    lifecycle_transition = "autoscaling:EC2_INSTANCE_LAUNCHING"
 
-  notification_metadata = <<EOF
+    notification_metadata = <<EOF
 {
   "foo": "bar"
 }
 EOF
-  notification_target_arn = aws_sns_topic.terminate.arn
-  role_arn                = aws_iam_role.sns_role.arn
+
+    notification_target_arn = aws_sns_topic.launch.arn
+    role_arn                = aws_iam_role.sns_role.arn
+  }
+
+  initial_lifecycle_hook {
+    name                 = "terminate-asg-panfw"
+    default_result       = "CONTINUE"
+    heartbeat_timeout    = 300
+    lifecycle_transition = "autoscaling:EC2_INSTANCE_TERMINATING"
+
+    notification_metadata   = <<EOF
+{
+  "foo": "bar"
+}
+EOF
+    notification_target_arn = aws_sns_topic.terminate.arn
+    role_arn                = aws_iam_role.sns_role.arn
   }
   tags = concat(
-      list(
-        map("key", "Name", "value", "PAN_FW_ASG", "propagate_at_launch", true)
-      ),
-      var.extra_tags)
+    list(
+      map("key", "Name", "value", "PAN_FW_ASG", "propagate_at_launch", true)
+    ),
+  var.extra_tags)
 }
 
 resource "aws_sns_topic" "launch" {
@@ -113,7 +113,7 @@ resource "aws_sns_topic" "terminate" {
 }
 
 resource "aws_iam_role" "sns_role" {
-  name = "SNS_Role" 
+  name = "SNS_Role"
   path = "/"
 
   assume_role_policy = <<EOF
