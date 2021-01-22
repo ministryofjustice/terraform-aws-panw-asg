@@ -10,7 +10,7 @@ variable "fw_product" {
 }
 
 variable "fw_product_map" {
-  type = "map"
+  type = map(any)
 
   default = {
     byol     = "6njl1pau431dv1qxipg63mvah"
@@ -21,7 +21,7 @@ variable "fw_product_map" {
 
 variable "instance_type" {
   description = "Instance type for FW"
-  default     = "m4.xlarge"
+  default     = "m5.xlarge"
 }
 
 variable "user_data" {
@@ -74,16 +74,36 @@ variable "security_group_ids" {
   default     = []
 }
 
-variable "extra_tags" {
-  description = "Extra tags to assign to ASG"
-  default = [{
-    key                 = null
-    value               = null
-    propagate_at_launch = null
-  }]
-  type = list(object({
-    key                 = string
-    value               = string
-    propagate_at_launch = bool
-  }))
+
+variable "notification_metadata" {
+  type    = map(any)
+  default = {}
+}
+
+variable "iam_instance_profile" {
+  description = "IAM Instance Profile for launch template"
+  type        = string
+  default     = ""
+}
+
+variable "lifecycle_metadata" {
+  description = "Metadata values for the lifecycle hook"
+  type        = string
+  default     = ""
+}
+
+variable "lambda_sfn_init_arn" {
+  description = "ARN of the sfn init function"
+  type        = string
+}
+
+variable "lambda_sfn_init_name" {
+  description = "Name of the sfn init function"
+  type        = string
+}
+
+variable "tags" {
+  description = "A set of tags to be propagated to EC2 instances during scale events"
+  type        = map(string)
+  default     = {}
 }

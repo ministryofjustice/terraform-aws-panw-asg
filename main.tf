@@ -25,36 +25,40 @@ resource "aws_launch_template" "this" {
   user_data              = var.user_data
   key_name               = var.key_name
   vpc_security_group_ids = var.security_group_ids
+  iam_instance_profile {
+    name = var.iam_instance_profile
+  }
 }
 
-resource "aws_autoscaling_policy" "dataplane_cpu-scale_up" {
-  name                   = "panfw_scale_out"
-  scaling_adjustment     = 1
-  adjustment_type        = "ChangeInCapacity"
-  cooldown               = 600
-  autoscaling_group_name = aws_autoscaling_group.this.name
-}
-resource "aws_autoscaling_policy" "dataplane_cpu-scale_down" {
-  name                   = "panfw_scale_in"
-  scaling_adjustment     = -1
-  adjustment_type        = "ChangeInCapacity"
-  cooldown               = 600
-  autoscaling_group_name = aws_autoscaling_group.this.name
-}
+# resource "aws_autoscaling_policy" "dataplane_cpu-scale_up" {
+#   name                   = "panfw_scale_out"
+#   scaling_adjustment     = 1
+#   adjustment_type        = "ChangeInCapacity"
+#   cooldown               = 600
+#   autoscaling_group_name = aws_autoscaling_group.this.name
+# }
+# resource "aws_autoscaling_policy" "dataplane_cpu-scale_down" {
+#   name                   = "panfw_scale_in"
+#   scaling_adjustment     = -1
+#   adjustment_type        = "ChangeInCapacity"
+#   cooldown               = 600
+#   autoscaling_group_name = aws_autoscaling_group.this.name
+# }
 resource "aws_autoscaling_policy" "active_sessions-scale_up" {
   name                   = "panfw_scale_out"
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
-  cooldown               = 600
+  cooldown               = 1800
   autoscaling_group_name = aws_autoscaling_group.this.name
 }
-resource "aws_autoscaling_policy" "active_sessions-scale_down" {
-  name                   = "panfw_scale_in"
-  scaling_adjustment     = -1
-  adjustment_type        = "ChangeInCapacity"
-  cooldown               = 600
-  autoscaling_group_name = aws_autoscaling_group.this.name
-}
+# resource "aws_autoscaling_policy" "active_sessions-scale_down" {
+#   name                   = "panfw_scale_in"
+#   scaling_adjustment     = -1
+#   adjustment_type        = "ChangeInCapacity"
+#   cooldown               = 3600
+#   autoscaling_group_name = aws_autoscaling_group.this.name
+# }
+
 resource "aws_autoscaling_group" "this" {
   name                = var.asg_name
   desired_capacity    = var.desired_capacity
@@ -67,50 +71,69 @@ resource "aws_autoscaling_group" "this" {
     version = "$Latest"
   }
 
-  initial_lifecycle_hook {
-    name                 = "launch-asg-panfw"
-    default_result       = "CONTINUE"
-    heartbeat_timeout    = 300
-    lifecycle_transition = "autoscaling:EC2_INSTANCE_LAUNCHING"
+  tags = [for key, value in var.tags : merge({ key = key }, { value = value }, { propagate_at_launch = "true" })]
 
-    notification_metadata = <<EOF
-{
-  "foo": "bar"
-}
-EOF
 
-    notification_target_arn = aws_sns_topic.launch.arn
-    role_arn                = aws_iam_role.sns_role.arn
-  }
-
-  initial_lifecycle_hook {
-    name                 = "terminate-asg-panfw"
-    default_result       = "CONTINUE"
-    heartbeat_timeout    = 300
-    lifecycle_transition = "autoscaling:EC2_INSTANCE_TERMINATING"
-
-    notification_metadata   = <<EOF
-{
-  "foo": "bar"
-}
-EOF
-    notification_target_arn = aws_sns_topic.terminate.arn
-    role_arn                = aws_iam_role.sns_role.arn
-  }
-  tags = concat(
-    list(
-      map("key", "Name", "value", "PAN_FW_ASG", "propagate_at_launch", true)
-    ),
-  var.extra_tags)
 }
 
-resource "aws_sns_topic" "launch" {
-  name = "launch-panfw-topic"
+resource "aws_autoscaling_lifecycle_hook" "launch" {
+  name                   = "launch-asg-panfw"
+  autoscaling_group_name = aws_autoscaling_group.this.name
+  default_result         = "ABANDON"
+  heartbeat_timeout      = 1800
+  lifecycle_transition   = "autoscaling:EC2_INSTANCE_LAUNCHING"
+  notification_metadata  = var.lifecycle_metadata
+
+  notification_target_arn = aws_sns_topic.this.arn
+  role_arn                = aws_iam_role.sns_role.arn
 }
 
-resource "aws_sns_topic" "terminate" {
-  name = "terminate-panfw-topic"
+resource "aws_autoscaling_lifecycle_hook" "terminate" {
+  name                   = "terminate-asg-panfw"
+  autoscaling_group_name = aws_autoscaling_group.this.name
+  default_result         = "CONTINUE"
+  heartbeat_timeout      = 300
+  lifecycle_transition   = "autoscaling:EC2_INSTANCE_TERMINATING"
+
+  notification_metadata = var.lifecycle_metadata
+
+  notification_target_arn = aws_sns_topic.this.arn
+  role_arn                = aws_iam_role.sns_role.arn
 }
+
+resource "aws_sns_topic" "this" {
+  name = "panfw-autoscale-topic"
+}
+
+resource "aws_sns_topic_subscription" "this" {
+  topic_arn = aws_sns_topic.this.id
+  protocol  = "lambda"
+  endpoint  = var.lambda_sfn_init_arn
+}
+
+# Assigns lambda a resource based policy. Required to get triggered via SNS
+resource "aws_lambda_permission" "with_sns" {
+  statement_id  = "AllowExecutionFromSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_sfn_init_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.this.arn
+}
+
+# resource "aws_autoscaling_notification" "this" {
+#   group_names = [
+#     aws_autoscaling_group.this.name,
+#   ]
+
+#   notifications = [
+#     "autoscaling:EC2_INSTANCE_LAUNCH",
+#     "autoscaling:EC2_INSTANCE_TERMINATE",
+#     "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+#     "autoscaling:EC2_INSTANCE_TERMINATE_ERROR",
+#   ]
+
+#   topic_arn = aws_sns_topic.this.arn
+# }
 
 resource "aws_iam_role" "sns_role" {
   name = "SNS_Role"
@@ -137,16 +160,13 @@ resource "aws_iam_role_policy" "ASGNotifierRolePolicy" {
   policy = <<EOF
 {
     "Version" : "2012-10-17",
-    "Statement": [{
-    "Effect": "Allow",
-    "Action": "sns:Publish",
-    "Resource": "${aws_sns_topic.launch.arn}"
-    },
-    {
-    "Effect": "Allow",
-    "Action": "sns:Publish",
-    "Resource": "${aws_sns_topic.terminate.arn}"
-    }]
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": "sns:Publish",
+        "Resource": "${aws_sns_topic.this.arn}"
+      }
+    ]
 }
 EOF
 }
