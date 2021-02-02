@@ -42,7 +42,8 @@ No requirements.
 
 | Name | Description |
 |------|-------------|
-| active\_session\_scale\_up\_policy | output "dataplane\_cpu\_scale\_down\_policy" { value = aws\_autoscaling\_policy.dataplane\_cpu-scale\_down.arn } |
+| active\_session\_scale\_down\_policy | n/a |
+| active\_session\_scale\_up\_policy | n/a |
 | asg | n/a |
 
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

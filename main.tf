@@ -51,13 +51,14 @@ resource "aws_autoscaling_policy" "active_sessions-scale_up" {
   cooldown               = 1800
   autoscaling_group_name = aws_autoscaling_group.this.name
 }
-# resource "aws_autoscaling_policy" "active_sessions-scale_down" {
-#   name                   = "panfw_scale_in"
-#   scaling_adjustment     = -1
-#   adjustment_type        = "ChangeInCapacity"
-#   cooldown               = 3600
-#   autoscaling_group_name = aws_autoscaling_group.this.name
-# }
+
+resource "aws_autoscaling_policy" "active_sessions-scale_down" {
+  name                   = "panfw_scale_in"
+  scaling_adjustment     = -1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 3600
+  autoscaling_group_name = aws_autoscaling_group.this.name
+}
 
 resource "aws_autoscaling_group" "this" {
   name                = var.asg_name
