@@ -8,7 +8,7 @@ data "aws_ami" "this" {
 
   filter {
     name   = "product-code"
-    values = ["${var.fw_product_map[var.fw_product]}"]
+    values = [var.fw_product_map[var.fw_product]]
   }
 
   filter {
