@@ -137,7 +137,7 @@ resource "aws_lambda_permission" "with_sns" {
 # }
 
 resource "aws_iam_role" "sns_role" {
-  name = "SNS_Role"
+  name = "${var.asg_name}_SNS_Role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -155,7 +155,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "ASGNotifierRolePolicy" {
-  name = "ASGNotifier_Policy"
+  name = "${var.asg_name}_ASGNotifier_Policy"
   role = aws_iam_role.sns_role.id
 
   policy = <<EOF
