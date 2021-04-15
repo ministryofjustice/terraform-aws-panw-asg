@@ -74,6 +74,10 @@ resource "aws_autoscaling_group" "this" {
 
   tags = [for key, value in var.tags : merge({ key = key }, { value = value }, { propagate_at_launch = "true" })]
 
+  timeouts {
+    create = "30m"
+    delete = "20m"
+  }
 
 }
 
