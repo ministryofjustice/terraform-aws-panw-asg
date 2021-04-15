@@ -61,11 +61,12 @@ resource "aws_autoscaling_policy" "active_sessions-scale_down" {
 }
 
 resource "aws_autoscaling_group" "this" {
-  name                = var.asg_name
-  desired_capacity    = var.desired_capacity
-  max_size            = var.max_size
-  min_size            = var.min_size
-  vpc_zone_identifier = var.vpc_zone_ids
+  name                      = var.asg_name
+  desired_capacity          = var.desired_capacity
+  max_size                  = var.max_size
+  min_size                  = var.min_size
+  vpc_zone_identifier       = var.vpc_zone_ids
+  wait_for_capacity_timeout = 0
 
   launch_template {
     id      = aws_launch_template.this.id
@@ -75,7 +76,6 @@ resource "aws_autoscaling_group" "this" {
   tags = [for key, value in var.tags : merge({ key = key }, { value = value }, { propagate_at_launch = "true" })]
 
   timeouts {
-    create = "30m"
     delete = "20m"
   }
 
