@@ -119,7 +119,7 @@ resource "aws_sns_topic_subscription" "this" {
 
 # Assigns lambda a resource based policy. Required to get triggered via SNS
 resource "aws_lambda_permission" "with_sns" {
-  statement_id  = "AllowExecutionFromSNS"
+  # statement_id  = "AllowExecutionFromSNS"
   action        = "lambda:InvokeFunction"
   function_name = var.lambda_sfn_init_name
   principal     = "sns.amazonaws.com"
